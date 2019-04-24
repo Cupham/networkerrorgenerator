@@ -13,188 +13,137 @@ import java.io.UnsupportedEncodingException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.Random;
 import java.util.Scanner;
 
 import object.Flow;
+import object.FlowEntry;
+import util.utils;
 
 public class mainLoop {
-	private static final char DEFAULT_SEPARATOR = ',';
-    private static final char DEFAULT_QUOTE = '"';
-    private static int lineNo;
+	
+    private static int lineCounter;
+    private static int flowCounter;
     private static FileWriter fw;
-
+    private static String sourceFileName = "error.csv";
+    private static String exportFileName = "injectedFlow.csv";
+    private static String targetIP_Delay = "192.168.2.167";
+    private static String targetIP_PacketError = "192.168.2.195";
+    private static String targetProtocol = "eth:ethertype:ip:udp:data";
+    private static ArrayList<FlowEntry> entryQueue;
+    private static ArrayList<Flow> flowQueue;
+    private static ArrayList<Flow> toBeRemoved;
+    
+    public static ArrayList<String> controllerIP = new ArrayList<String>(
+			Arrays.asList("192.168.3.163","192.168.2.238"));
+    
 	public static void main(String[] args) throws ParseException, IOException {
-		String csvFile = "error.csv";
-        String delayIP = "192.168.2.167";
-        String packetsizeIP = "192.168.2.195";
-        String protocol = "eth:ethertype:ip:udp:data";
-        ArrayList<Flow> flows  = new ArrayList<Flow>();
-        lineNo = 0;
+		
+        lineCounter = 0;
+        flowCounter = 0;
+        entryQueue = new ArrayList<FlowEntry>();
+        flowQueue= new ArrayList<Flow>();
+        toBeRemoved= new ArrayList<Flow>();
+        fw = new FileWriter(new File(exportFileName),true);
+        utils.writeFlowHeader(fw);
         
-        fw = new FileWriter(new File("injected.csv"),true);
+        //load source file
         System.out.println("Reading file....");
-        Scanner scanner = new Scanner(new File(csvFile));
+        Scanner scanner = new Scanner(new File(sourceFileName));
         while (scanner.hasNext()) {
-        	lineNo++;
-        	if(lineNo >4534670) {
-            List<String> line = parseLine(scanner.nextLine());
-            if(line.get(1).equals(delayIP) && line.get(6).equals(protocol) && isTarget(lineNo)) {   	
-            	Flow flow = new Flow();
-            	Date date  =  new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").parse(line.get(0));
-            	flow.setTime(createDelayTime(date));
-            	flow.setSrcIP(line.get(1));
-            	flow.setDstIP(line.get(2));
-            	flow.setSrcPort(Integer.parseInt(line.get(3)));
-            	flow.setDstPort(Integer.parseInt(line.get(4)));
-            	flow.setFrameSize(Integer.parseInt(line.get(5)));
-            	flow.setProtocol(line.get(6));
-            	flow.setPkSize(Integer.parseInt(line.get(7)));
-            	flow.setData(line.get(8));
-            	flow.setError(true);
-            	writeToCSV(flow);
-            	//flows.add(flow);
-            } else if(line.get(1).equals(packetsizeIP) && line.get(6).equals(protocol) && isTarget(lineNo)) {
-            	Flow flow = new Flow();
-            	Date date  =  new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").parse(line.get(0));
-            	int addedTime = random();
-            	int frameSize =Integer.parseInt(line.get(5));
-            	int pckSize = Integer.parseInt(line.get(7));    	
-            	flow.setTime(date);
-            	flow.setSrcIP(line.get(1));
-            	flow.setDstIP(line.get(2));
-            	flow.setSrcPort(Integer.parseInt(line.get(3)));
-            	flow.setDstPort(Integer.parseInt(line.get(4)));
-            	flow.setFrameSize(frameSize + addedTime);
-            	flow.setProtocol(line.get(6));
-            	flow.setPkSize(pckSize + addedTime);
-            	flow.setData(line.get(8));
-            	flow.setError(true);
-            	writeToCSV(flow);
-            	flows.add(flow);
-            	
-            } else {
-            	Flow flow = new Flow();
-            	Date date  =  new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").parse(line.get(0));
-            	flow.setTime(date);
-            	if(!line.get(1).equals("")) {
-            		flow.setSrcIP(line.get(1));
-            	}
-            	if(!line.get(2).equals("")) {
-            		flow.setDstIP(line.get(2));
-            	}
-            	if(!line.get(3).equals("")) {
-            		flow.setSrcPort(Integer.parseInt(line.get(3)));
-            	}
-            	if(!line.get(4).equals("")) {
-            		flow.setDstPort(Integer.parseInt(line.get(4)));
-            	}
-            	if(!line.get(5).equals("")) {
-            		flow.setFrameSize(Integer.parseInt(line.get(5)));
-            	}
-            	if(!line.get(6).equals("")) {
-            		flow.setProtocol(line.get(6));
-            	}
-            	if(!line.get(7).equals("")) {
-            		flow.setPkSize(Integer.parseInt(line.get(7)));
-            	}
-            	if(!line.get(8).equals("")) {
-            		flow.setData(line.get(8));
-            	}
-            	writeToCSV(flow);
-            	flows.add(flow);
-            }
-        }
+        	lineCounter++;
+        	System.out.println("line " + lineCounter);
+        	//limit number of line for testing purposes
+        	if(lineCounter <2000000 ) {
+	            List<String> line = utils.parseLine(scanner.nextLine());
+	            if(line.get(6).equals(targetProtocol)) {
+		            FlowEntry entry = utils.flowEntryFromLine(line,lineCounter);
+		            if(controllerIP.contains(entry.getSrcIP())) {
+		            	flowCounter++;
+		            	Flow f = new Flow();
+		            	f.setFlowNo(flowCounter);
+		            	f.setFirstSentTime(entry.getTime());
+		            	f.setFromIP(entry.getSrcIP());
+		            	f.setToIP(entry.getDstIP());
+		            	f.setReceivedFromPort(entry.getSrcPort());
+		            	f.setSendToPort(entry.getDstPort());
+		            	f.setSentFrameSize(entry.getFrameSize());
+		            	f.setSentData(entry.getData());
+		            	f.setProtocol(entry.getProtocol());
+		            	flowQueue.add(f);
+		            } else {
+		            	entryQueue.add(entry);
+		            }
+		            for(int i = 0;i <flowQueue.size(); i++) {
+		            	for(int j =0;j < entryQueue.size(); j++) {		         
+		            		if(flowQueue.get(i).getFromIP().equals(entryQueue.get(j).getDstIP()) && 
+		            		   flowQueue.get(i).getToIP().equals(entryQueue.get(j).getSrcIP())) {
+		            			Flow aFlow = flowQueue.get(i);
+		            			FlowEntry flowEntry  = entryQueue.get(j);
+		            			aFlow.setLastReceivedTime(flowEntry.getTime());
+			            		aFlow.setReceivedFrameSize(flowEntry.getFrameSize());
+			            		aFlow.setReceivedData(flowEntry.getData());
+			            		long time = aFlow.getLastReceivedTime().getTime() - aFlow.getFirstSentTime().getTime();
+			            		if(time <0) {
+			            			System.out.println("Something went wrong with flow: " + aFlow.toString());
+			            		} else {
+			            			aFlow.setTransactionTime(time);
+			            		}
+			            		//finish creating flow
+			            		entryQueue.remove(j);
+			            		utils.writeFlowToFile(fw, aFlow);
+			            		toBeRemoved.add(aFlow);
+		            		   }
+		            	}
+		            	
+		            }
+		            for(Flow flow : toBeRemoved) {
+		            	flowQueue.remove(flow);
+		            }
+		            toBeRemoved.clear();
+		            
+	            }
+	            /*
+	            Iterator<Flow> flowIter = flowQueue.iterator(); 
+	            while(flowIter.hasNext()){	      
+	        		Flow aFlow = flowIter.next();	        	
+	        		Iterator<FlowEntry> entryIter = entryQueue.iterator();
+	        		while(entryIter.hasNext()) {
+	        			FlowEntry flowEntry = entryIter.next();
+	        			if(aFlow.getFromIP().equals(flowEntry.getDstIP()) && aFlow.getToIP().equals(flowEntry.getSrcIP())) {
+		            		// Create a flow
+		            		aFlow.setLastReceivedTime(flowEntry.getTime());
+		            		aFlow.setReceivedFrameSize(flowEntry.getFrameSize());
+		            		aFlow.setReceivedData(flowEntry.getData());
+		            		long time = aFlow.getLastReceivedTime().getTime() - aFlow.getFirstSentTime().getTime();
+		            		if(time <0) {
+		            			System.out.println("Something went wrong with flow: " + aFlow.toString());
+		            		} else {
+		            			aFlow.setTransactionTime(time);
+		            		}
+		            		//finish creating flow
+		            		entryIter.remove();
+		            		utils.writeFlowToFile(fw, aFlow);
+		            		flowIter.remove();
+		            	}
+	        			
+	        		}                        	
+	            }*/
+	    
+        	} 
         }
         scanner.close();
+        fw.flush();
         fw.close();
         System.out.println("Finished reading file");
-
-       // writeToCSV(flows);
-
 	}
 
-	
-	private static void writeToCSV(ArrayList<Flow> flows)
-    {
-		 System.out.println("Start writing file...");
-        try
-        {
-            BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("injected.csv"), "UTF-8"));
-            for (Flow flow : flows)
-            {
-                StringBuffer oneLine = new StringBuffer();
-                
-                oneLine.append(flow.getTime());
-                oneLine.append(DEFAULT_SEPARATOR);
-                oneLine.append(flow.getSrcIP());
-                oneLine.append(DEFAULT_SEPARATOR);
-                oneLine.append(flow.getDstIP());
-                oneLine.append(DEFAULT_SEPARATOR);
-                oneLine.append(flow.getSrcPort());
-                oneLine.append(DEFAULT_SEPARATOR);
-                oneLine.append(flow.getDstPort());
-                oneLine.append(DEFAULT_SEPARATOR);
-                oneLine.append(flow.getFrameSize());
-                oneLine.append(DEFAULT_SEPARATOR);        
-                oneLine.append(flow.getProtocol());
-                oneLine.append(DEFAULT_SEPARATOR);
-                oneLine.append(flow.getPkSize());
-                oneLine.append(DEFAULT_SEPARATOR);
-                oneLine.append(flow.getData());
-                oneLine.append(DEFAULT_SEPARATOR);
-                oneLine.append(flow.isError());
-        
-                bw.write(oneLine.toString());
-                bw.newLine();
-                
-            }
-            bw.flush();
-            bw.close();
-            System.out.println("I finished!!");
-        }
-        catch (UnsupportedEncodingException e) {}
-        catch (FileNotFoundException e){}
-        catch (IOException e){}
-    }
-	
-	private static void writeToCSV( Flow flow)
-    {
-		 System.out.println("Writing file... line : " + lineNo);
-        try
-        {         
-        	
-        	StringBuffer oneLine = new StringBuffer();
-            
-            oneLine.append(flow.getTime());
-            oneLine.append(DEFAULT_SEPARATOR);
-            oneLine.append(flow.getSrcIP());
-            oneLine.append(DEFAULT_SEPARATOR);
-            oneLine.append(flow.getDstIP());
-            oneLine.append(DEFAULT_SEPARATOR);
-            oneLine.append(flow.getSrcPort());
-            oneLine.append(DEFAULT_SEPARATOR);
-            oneLine.append(flow.getDstPort());
-            oneLine.append(DEFAULT_SEPARATOR);
-            oneLine.append(flow.getFrameSize());
-            oneLine.append(DEFAULT_SEPARATOR);        
-            oneLine.append(flow.getProtocol());
-            oneLine.append(DEFAULT_SEPARATOR);
-            oneLine.append(flow.getPkSize());
-            oneLine.append(DEFAULT_SEPARATOR);
-            oneLine.append(flow.getData());
-            oneLine.append(DEFAULT_SEPARATOR);
-            oneLine.append(flow.isError());
-            oneLine.append("\n");
-    
-        	fw.write(oneLine.toString());
-        }
-        catch (UnsupportedEncodingException e) {}
-        catch (FileNotFoundException e){}
-        catch (IOException e){}
-    }
 	
 	public static Date createDelayTime(Date old) {
 		Random r = new Random();
@@ -220,97 +169,8 @@ public class mainLoop {
 	}
 	
 	
-	public static List<String> parseLine(String cvsLine) {
-        return parseLine(cvsLine, DEFAULT_SEPARATOR, DEFAULT_QUOTE);
-    }
+	
 
-    public static List<String> parseLine(String cvsLine, char separators) {
-        return parseLine(cvsLine, separators, DEFAULT_QUOTE);
-    }
-
-    public static List<String> parseLine(String cvsLine, char separators, char customQuote) {
-
-        List<String> result = new ArrayList<>();
-
-        //if empty, return!
-        if (cvsLine == null && cvsLine.isEmpty()) {
-            return result;
-        }
-
-        if (customQuote == ' ') {
-            customQuote = DEFAULT_QUOTE;
-        }
-
-        if (separators == ' ') {
-            separators = DEFAULT_SEPARATOR;
-        }
-
-        StringBuffer curVal = new StringBuffer();
-        boolean inQuotes = false;
-        boolean startCollectChar = false;
-        boolean doubleQuotesInColumn = false;
-
-        char[] chars = cvsLine.toCharArray();
-
-        for (char ch : chars) {
-
-            if (inQuotes) {
-                startCollectChar = true;
-                if (ch == customQuote) {
-                    inQuotes = false;
-                    doubleQuotesInColumn = false;
-                } else {
-
-                    //Fixed : allow "" in custom quote enclosed
-                    if (ch == '\"') {
-                        if (!doubleQuotesInColumn) {
-                            curVal.append(ch);
-                            doubleQuotesInColumn = true;
-                        }
-                    } else {
-                        curVal.append(ch);
-                    }
-
-                }
-            } else {
-                if (ch == customQuote) {
-
-                    inQuotes = true;
-
-                    //Fixed : allow "" in empty quote enclosed
-                    if (chars[0] != '"' && customQuote == '\"') {
-                        curVal.append('"');
-                    }
-
-                    //double quotes in column will hit this!
-                    if (startCollectChar) {
-                        curVal.append('"');
-                    }
-
-                } else if (ch == separators) {
-
-                    result.add(curVal.toString());
-
-                    curVal = new StringBuffer();
-                    startCollectChar = false;
-
-                } else if (ch == '\r') {
-                    //ignore LF characters
-                    continue;
-                } else if (ch == '\n') {
-                    //the end, break!
-                    break;
-                } else {
-                    curVal.append(ch);
-                }
-            }
-
-        }
-
-        result.add(curVal.toString());
-
-        return result;
-    }
 
 }
 

@@ -3,90 +3,154 @@ package object;
 import java.util.Date;
 
 public class Flow {
-	private Date time;
-	private String srcIP;
-	private String dstIP;
+	private int flowNo;
+	private Date firstSentTime;
+	private Date lastReceivedTime;
+	private String fromIP;
+	private String toIP;
+	private int sendToPort;
+	private int receivedFromPort;
+	private int sentFrameSize;
+	private int receivedFrameSize;
+	private String sentData;
+	private String receivedData;
 	private String protocol;
-	private String data;
-	private int srcPort;
-	private int dstPort;
-	private int frameSize;
-	private int pkSize;
-	private boolean isError;
+	private boolean isAbnormal;
+	private long transactionTime;
+	private boolean hasSubFlow;
 	
 	public Flow() {
 		
 	}
-	public Flow(Date time, String srcIP, String dstIP, String protocol, int srcPort, int dstPort, int frameSize,
-			int pkSize) {
-		super();
-		this.time = time;
-		this.srcIP = srcIP;
-		this.dstIP = dstIP;
-		this.protocol = protocol;
-		this.srcPort = srcPort;
-		this.dstPort = dstPort;
-		this.frameSize = frameSize;
-		this.pkSize = pkSize;
+
+	public int getFlowNo() {
+		return flowNo;
 	}
-	public Date getTime() {
-		return time;
+
+	public void setFlowNo(int flowNo) {
+		this.flowNo = flowNo;
 	}
-	public void setTime(Date time) {
-		this.time = time;
+
+	public Date getFirstSentTime() {
+		return firstSentTime;
 	}
-	public String getSrcIP() {
-		return srcIP;
+
+	public void setFirstSentTime(Date firstSentTime) {
+		this.firstSentTime = firstSentTime;
 	}
-	public void setSrcIP(String srcIP) {
-		this.srcIP = srcIP;
+
+	public Date getLastReceivedTime() {
+		return lastReceivedTime;
 	}
-	public String getDstIP() {
-		return dstIP;
+
+	public void setLastReceivedTime(Date lastReceivedTime) {
+		this.lastReceivedTime = lastReceivedTime;
 	}
-	public void setDstIP(String dstIP) {
-		this.dstIP = dstIP;
+
+	public String getFromIP() {
+		return fromIP;
 	}
+
+	public void setFromIP(String fromIP) {
+		this.fromIP = fromIP;
+	}
+
+	public String getToIP() {
+		return toIP;
+	}
+
+	public void setToIP(String toIP) {
+		this.toIP = toIP;
+	}
+
+	public int getSendToPort() {
+		return sendToPort;
+	}
+
+	public void setSendToPort(int sendToPort) {
+		this.sendToPort = sendToPort;
+	}
+
+	public int getReceivedFromPort() {
+		return receivedFromPort;
+	}
+
+	public void setReceivedFromPort(int receivedFromPort) {
+		this.receivedFromPort = receivedFromPort;
+	}
+
+	public int getSentFrameSize() {
+		return sentFrameSize;
+	}
+
+	public void setSentFrameSize(int sentFrameSize) {
+		this.sentFrameSize = sentFrameSize;
+	}
+
+	public int getReceivedFrameSize() {
+		return receivedFrameSize;
+	}
+
+	public void setReceivedFrameSize(int receivedFrameSize) {
+		this.receivedFrameSize = receivedFrameSize;
+	}
+
+	public String getSentData() {
+		return sentData;
+	}
+
+	public void setSentData(String sentData) {
+		this.sentData = sentData;
+	}
+
+	public String getReceivedData() {
+		return receivedData;
+	}
+
+	public void setReceivedData(String receivedData) {
+		this.receivedData = receivedData;
+	}
+
 	public String getProtocol() {
 		return protocol;
 	}
+
 	public void setProtocol(String protocol) {
 		this.protocol = protocol;
 	}
-	public int getSrcPort() {
-		return srcPort;
+
+	public boolean isAbnormal() {
+		return isAbnormal;
 	}
-	public void setSrcPort(int srcPort) {
-		this.srcPort = srcPort;
+
+	public void setAbnormal(boolean isAbnormal) {
+		this.isAbnormal = isAbnormal;
 	}
-	public int getDstPort() {
-		return dstPort;
+
+	public long getTransactionTime() {
+		return transactionTime;
 	}
-	public void setDstPort(int dstPort) {
-		this.dstPort = dstPort;
+
+	public void setTransactionTime(long transactionTime) {
+		this.transactionTime = transactionTime;
 	}
-	public int getFrameSize() {
-		return frameSize;
+
+	public boolean isHasSubFlow() {
+		return hasSubFlow;
 	}
-	public void setFrameSize(int frameSize) {
-		this.frameSize = frameSize;
+
+	public void setHasSubFlow(boolean hasSubFlow) {
+		this.hasSubFlow = hasSubFlow;
 	}
-	public int getPkSize() {
-		return pkSize;
+
+	@Override
+	public String toString() {
+		StringBuilder str = new StringBuilder();
+		str.append("Flow #: " + getFlowNo() + "---");
+		str.append("From IP: " + getFromIP() + "---");
+		str.append("To IP: " + getToIP() + "\n");
+		return str.toString();
 	}
-	public void setPkSize(int pkSize) {
-		this.pkSize = pkSize;
-	}
-	public String getData() {
-		return data;
-	}
-	public void setData(String data) {
-		this.data = data;
-	}
-	public boolean isError() {
-		return isError;
-	}
-	public void setError(boolean isError) {
-		this.isError = isError;
-	}
+	
+	
 }
