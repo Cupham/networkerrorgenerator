@@ -31,7 +31,7 @@ public class mainLoop {
     private static int lineCounter;
     private static int flowCounter;
     private static FileWriter fw;
-    private static String sourceFileName = "error.csv";
+    private static String sourceFileName = "error_demo.csv";
     private static String exportFileName = "injectedFlow.csv";
     private static String targetIP_Delay = "192.168.2.167";
     private static String targetIP_PacketError = "192.168.2.195";
@@ -68,7 +68,7 @@ public class mainLoop {
 		            	flowCounter++;
 		            	Flow f = new Flow();
 		            	f.setFlowNo(flowCounter);
-		            	f.setFirstSentTime(entry.getTime());
+		            	f.setFirstSentTime((entry.getTime()));
 		            	f.setFromIP(entry.getSrcIP());
 		            	f.setToIP(entry.getDstIP());
 		            	f.setReceivedFromPort(entry.getSrcPort());
@@ -80,7 +80,8 @@ public class mainLoop {
 		            } else {
 		            	entryQueue.add(entry);
 		            }
-		            for(int i = 0;i <flowQueue.size(); i++) {
+		            
+		            /*for(int i = 0;i <flowQueue.size(); i++) {
 		            	for(int j =0;j < entryQueue.size(); j++) {		         
 		            		if(flowQueue.get(i).getFromIP().equals(entryQueue.get(j).getDstIP()) && 
 		            		   flowQueue.get(i).getToIP().equals(entryQueue.get(j).getSrcIP())) {
@@ -89,7 +90,7 @@ public class mainLoop {
 		            			aFlow.setLastReceivedTime(flowEntry.getTime());
 			            		aFlow.setReceivedFrameSize(flowEntry.getFrameSize());
 			            		aFlow.setReceivedData(flowEntry.getData());
-			            		long time = aFlow.getLastReceivedTime().getTime() - aFlow.getFirstSentTime().getTime();
+			            		double time = utils.deltaTimeMillis(aFlow.getLastReceivedTime(), aFlow.getFirstSentTime()) ;
 			            		if(time <0) {
 			            			System.out.println("Something went wrong with flow: " + aFlow.toString());
 			            		} else {
@@ -98,6 +99,7 @@ public class mainLoop {
 			            		//finish creating flow
 			            		entryQueue.remove(j);
 			            		utils.writeFlowToFile(fw, aFlow);
+			            		flowQueue.remove(aFlow);
 			            		toBeRemoved.add(aFlow);
 		            		   }
 		            	}
@@ -108,8 +110,8 @@ public class mainLoop {
 		            }
 		            toBeRemoved.clear();
 		            
-	            }
-	            /*
+	            }*/
+	            
 	            Iterator<Flow> flowIter = flowQueue.iterator(); 
 	            while(flowIter.hasNext()){	      
 	        		Flow aFlow = flowIter.next();	        	
@@ -121,12 +123,12 @@ public class mainLoop {
 		            		aFlow.setLastReceivedTime(flowEntry.getTime());
 		            		aFlow.setReceivedFrameSize(flowEntry.getFrameSize());
 		            		aFlow.setReceivedData(flowEntry.getData());
-		            		long time = aFlow.getLastReceivedTime().getTime() - aFlow.getFirstSentTime().getTime();
-		            		if(time <0) {
-		            			System.out.println("Something went wrong with flow: " + aFlow.toString());
-		            		} else {
-		            			aFlow.setTransactionTime(time);
-		            		}
+		            		double time = utils.deltaTimeMillis(aFlow.getLastReceivedTime(), aFlow.getFirstSentTime()) ;
+			            		if(time <0) {
+			            			System.out.println("Something went wrong with flow: " + aFlow.toString());
+			            		} else {
+			            			aFlow.setTransactionTime(time);
+			            		}
 		            		//finish creating flow
 		            		entryIter.remove();
 		            		utils.writeFlowToFile(fw, aFlow);
@@ -134,9 +136,11 @@ public class mainLoop {
 		            	}
 	        			
 	        		}                        	
-	            }*/
-	    
-        	} 
+	            }
+	            }
+        	} else {
+        		break;
+        	}
         }
         scanner.close();
         fw.flush();

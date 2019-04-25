@@ -1,11 +1,10 @@
 package object;
 
-import java.util.Date;
 
 public class Flow {
 	private int flowNo;
-	private Date firstSentTime;
-	private Date lastReceivedTime;
+	private TimeObj firstSentTime;
+	private TimeObj lastReceivedTime;
 	private String fromIP;
 	private String toIP;
 	private int sendToPort;
@@ -16,7 +15,7 @@ public class Flow {
 	private String receivedData;
 	private String protocol;
 	private boolean isAbnormal;
-	private long transactionTime;
+	private double transactionTime;
 	private boolean hasSubFlow;
 	
 	public Flow() {
@@ -31,19 +30,19 @@ public class Flow {
 		this.flowNo = flowNo;
 	}
 
-	public Date getFirstSentTime() {
+	public TimeObj getFirstSentTime() {
 		return firstSentTime;
 	}
 
-	public void setFirstSentTime(Date firstSentTime) {
+	public void setFirstSentTime(TimeObj firstSentTime) {
 		this.firstSentTime = firstSentTime;
 	}
 
-	public Date getLastReceivedTime() {
+	public TimeObj getLastReceivedTime() {
 		return lastReceivedTime;
 	}
 
-	public void setLastReceivedTime(Date lastReceivedTime) {
+	public void setLastReceivedTime(TimeObj lastReceivedTime) {
 		this.lastReceivedTime = lastReceivedTime;
 	}
 
@@ -127,11 +126,11 @@ public class Flow {
 		this.isAbnormal = isAbnormal;
 	}
 
-	public long getTransactionTime() {
+	public double getTransactionTime() {
 		return transactionTime;
 	}
 
-	public void setTransactionTime(long transactionTime) {
+	public void setTransactionTime(double transactionTime) {
 		this.transactionTime = transactionTime;
 	}
 

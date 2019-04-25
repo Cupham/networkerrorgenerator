@@ -1,10 +1,9 @@
 package object;
 
-import java.util.Date;
 
 public class FlowEntry {
 	private int packetNo;
-	private Date time;
+	private TimeObj time;
 	private String srcIP;
 	private String dstIP;
 	private String protocol;
@@ -18,7 +17,7 @@ public class FlowEntry {
 	public FlowEntry() {
 		
 	}
-	public FlowEntry(Date time, String srcIP, String dstIP, String protocol, int srcPort, int dstPort, int frameSize,
+	public FlowEntry(TimeObj time, String srcIP, String dstIP, String protocol, int srcPort, int dstPort, int frameSize,
 			int pkSize) {
 		super();
 		this.time = time;
@@ -30,10 +29,10 @@ public class FlowEntry {
 		this.frameSize = frameSize;
 		this.pkSize = pkSize;
 	}
-	public Date getTime() {
+	public TimeObj getTime() {
 		return time;
 	}
-	public void setTime(Date time) {
+	public void setTime(TimeObj time) {
 		this.time = time;
 	}
 	public String getSrcIP() {

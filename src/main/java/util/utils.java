@@ -9,9 +9,12 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import object.Flow;
 import object.FlowEntry;
+import object.TimeObj;
 
 public class utils {
 	private static final char DEFAULT_SEPARATOR = ',';
@@ -193,17 +196,7 @@ public class utils {
     
     public static FlowEntry flowEntryFromLine(List<String> line,int lineNo) {
     	FlowEntry fe  = new FlowEntry();
-    	Date date;
-		try {
-			sdf.setLenient(true);
-			date = sdf.parse(line.get(0));
-			System.out.println(line.get(0));
-			System.out.println(date.toString());
-			fe.setTime(date);
-		} catch (ParseException e) {
-			System.out.println("Error while parsing date time");
-			e.printStackTrace();
-		}
+		fe.setTime(utils.stringToTime(line.get(0)));
 		fe.setPacketNo(lineNo);
     	if(!line.get(1).equals("")) {
     		fe.setSrcIP(line.get(1));
@@ -246,6 +239,38 @@ public class utils {
     	return flow;
     }
     
+    public static TimeObj stringToTime (String time) {
+    	String pattern ="(\\d{4})-(\\d{2})-(\\d{2}) (\\d{2}):(\\d{2}):(\\d{2}).(\\d{6})";
+
+		Pattern p = Pattern.compile(pattern);
+	    Matcher m = p.matcher(time);
+	    TimeObj etime = new TimeObj();
+	    if(m.find()) {
+	    	etime.setYear(Integer.parseInt(m.group(1)));
+	    	etime.setMonth(Integer.parseInt(m.group(2)));
+	    	etime.setDay(Integer.parseInt(m.group(3)));
+	    	etime.setHour(Integer.parseInt(m.group(4)));
+	    	etime.setMinute(Integer.parseInt(m.group(5)));
+	    	etime.setSecond(Integer.parseInt(m.group(6)));
+	    	etime.setMillisecond(Integer.parseInt(m.group(7)));
+	    }
+	    return etime;
+    }
+    public static double deltaTimeMillis(TimeObj greater, TimeObj smaller) {
+		TimeObj delta = new TimeObj();
+		delta.setYear(greater.getYear() - smaller.getYear());		
+		delta.setMonth(greater.getMonth() - smaller.getMonth());
+		delta.setDay(greater.getDay() - smaller.getDay());
+		delta.setHour(greater.getHour() - smaller.getHour());
+		delta.setMinute(greater.getMinute() - smaller.getMinute());
+		delta.setSecond(greater.getSecond() - smaller.getSecond());
+		delta.setMillisecond(greater.getMillisecond() - smaller.getMillisecond());
+		System.out.println(greater.toString());
+		System.out.println(smaller.toString());
+		System.out.println(delta.toString());
+		System.out.println(delta.toMillis() + " ms");
+		return delta.toMillis();
+	}
     public static void writeFlowToFile(FileWriter fw, Flow flow) {
     	 System.out.println("Writing a Flow to File:" + flow.toString());
          try
@@ -255,9 +280,9 @@ public class utils {
              
              oneLine.append(flow.getFlowNo());
              oneLine.append(DEFAULT_SEPARATOR);
-             oneLine.append(sdf.format(flow.getFirstSentTime()));
+             oneLine.append(flow.getFirstSentTime().toString());
              oneLine.append(DEFAULT_SEPARATOR);
-             oneLine.append(sdf.format(flow.getLastReceivedTime()));
+             oneLine.append(flow.getLastReceivedTime().toString());
              oneLine.append(DEFAULT_SEPARATOR);
              oneLine.append(flow.getFromIP());
              oneLine.append(DEFAULT_SEPARATOR);
